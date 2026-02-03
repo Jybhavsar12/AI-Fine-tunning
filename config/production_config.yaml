@@ -1,0 +1,67 @@
+# Production Configuration
+# Optimized for best quality with Llama-2 7B
+
+model:
+  name: "meta-llama/Llama-2-7b-hf"
+  use_flash_attention: false
+  trust_remote_code: true
+  load_in_8bit: false
+  load_in_4bit: true
+
+lora:
+  enabled: true
+  r: 32  # Higher rank for better quality
+  lora_alpha: 64
+  lora_dropout: 0.05
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  bias: "none"
+  task_type: "CAUSAL_LM"
+
+dataset:
+  name: "custom"
+  train_file: "data/train.jsonl"
+  eval_file: "data/eval.jsonl"
+  max_length: 2048
+  prompt_template: "alpaca"
+
+training:
+  output_dir: "./outputs/production"
+  num_train_epochs: 5  # More epochs for better learning
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 8  # Larger effective batch size
+  learning_rate: 2.0e-4
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.05
+  weight_decay: 0.01
+  max_grad_norm: 0.3
+  
+  optim: "paged_adamw_32bit"
+  fp16: false
+  bf16: true
+  
+  logging_steps: 10
+  save_steps: 100
+  eval_steps: 100
+  save_total_limit: 3
+  evaluation_strategy: "steps"
+  
+  group_by_length: true
+  report_to: ["tensorboard", "wandb"]
+  seed: 42
+
+inference:
+  max_new_tokens: 512
+  temperature: 0.7
+  top_p: 0.9
+  top_k: 50
+  repetition_penalty: 1.1
+  do_sample: true
+

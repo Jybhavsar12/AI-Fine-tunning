@@ -1,0 +1,62 @@
+# Minimal Configuration for Low-End Hardware
+# Works on: 4GB VRAM, 8GB RAM, 20GB Storage
+
+model:
+  name: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"  # Only 1.1B parameters!
+  use_flash_attention: false
+  trust_remote_code: true
+  load_in_8bit: false
+  load_in_4bit: true  # 4-bit quantization for minimal memory
+
+lora:
+  enabled: true
+  r: 8  # Small rank for speed
+  lora_alpha: 16
+  lora_dropout: 0.05
+  target_modules:
+    - q_proj
+    - v_proj
+  bias: "none"
+  task_type: "CAUSAL_LM"
+
+dataset:
+  name: "custom"
+  train_file: "data/train.jsonl"
+  eval_file: "data/eval.jsonl"
+  max_length: 512  # Short sequences
+  prompt_template: "alpaca"
+
+training:
+  output_dir: "./outputs/minimal"
+  num_train_epochs: 1  # Just 1 epoch
+  per_device_train_batch_size: 1  # Smallest batch
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 8  # Simulate larger batch
+  learning_rate: 3.0e-4
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.03
+  weight_decay: 0.001
+  max_grad_norm: 0.3
+  
+  optim: "paged_adamw_8bit"  # 8-bit optimizer
+  fp16: false
+  bf16: false  # Disable for compatibility
+  
+  logging_steps: 5
+  save_steps: 100
+  eval_steps: 100
+  save_total_limit: 1  # Keep only 1 checkpoint
+  evaluation_strategy: "no"  # Skip eval to save memory
+  
+  group_by_length: false
+  report_to: []  # No tracking to save resources
+  seed: 42
+
+inference:
+  max_new_tokens: 128  # Shorter responses
+  temperature: 0.7
+  top_p: 0.9
+  top_k: 50
+  repetition_penalty: 1.1
+  do_sample: true
+
