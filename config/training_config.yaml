@@ -1,0 +1,75 @@
+# Fine-tuning Configuration
+
+# Model Configuration
+model:
+  name: "meta-llama/Llama-2-7b-hf"  # Base model to fine-tune
+  # Alternatives: "mistralai/Mistral-7B-v0.1", "google/gemma-7b", "microsoft/phi-2"
+  use_flash_attention: false
+  trust_remote_code: true
+  load_in_8bit: false
+  load_in_4bit: true  # Use QLoRA (4-bit quantization)
+
+# LoRA Configuration
+lora:
+  enabled: true
+  r: 16  # LoRA rank
+  lora_alpha: 32
+  lora_dropout: 0.05
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  bias: "none"
+  task_type: "CAUSAL_LM"
+
+# Dataset Configuration
+dataset:
+  name: "custom"  # or HuggingFace dataset name
+  train_file: "data/train.jsonl"
+  eval_file: "data/eval.jsonl"
+  max_length: 2048
+  prompt_template: "alpaca"  # alpaca, chatml, llama2, custom
+  
+# Training Arguments
+training:
+  output_dir: "./outputs"
+  num_train_epochs: 3
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 4
+  learning_rate: 2.0e-4
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.03
+  weight_decay: 0.001
+  max_grad_norm: 0.3
+  
+  # Optimization
+  optim: "paged_adamw_32bit"  # For QLoRA
+  fp16: false
+  bf16: true  # Use bfloat16 if available
+  
+  # Logging & Saving
+  logging_steps: 10
+  save_steps: 100
+  eval_steps: 100
+  save_total_limit: 3
+  evaluation_strategy: "steps"
+  
+  # Advanced
+  group_by_length: true
+  report_to: ["tensorboard"]  # ["wandb", "tensorboard"]
+  seed: 42
+
+# Inference Configuration
+inference:
+  max_new_tokens: 512
+  temperature: 0.7
+  top_p: 0.9
+  top_k: 50
+  repetition_penalty: 1.1
+  do_sample: true
+
